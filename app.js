@@ -1,8 +1,9 @@
 const 
     express = require('express'),
     cors = require('cors'),
-    bodyParser = require('body-parser');
-    port = process.env.PORT || 3000;
+    bodyParser = require('body-parser'),
+    port = process.env.PORT || 3000,
+    {version} = require('./package');
 
 const app = express();
 
@@ -13,33 +14,32 @@ app.use(bodyParser.urlencoded({ extended: false }));
 app.all('*',handleAll)
 
 function handleAll(req,res,next){
-    const body = req.body;
-    const query = req.query;
+    const {body, query, hostname, path, method} = req;
     let status = 200;
-    let resPayload;
-    let reqPayloadIs;
+    let payload;
+    let payLoadFrom;
     if(Object.keys(body).length !== 0) {
-        resPayload = body
-        reqPayloadIs = 'body';
+        payload = body
+        payLoadFrom = 'body';
     } else if(Object.keys(query).length !== 0) {
-        resPayload = query
-        reqPayloadIs = 'query';
+        payload = query
+        payLoadFrom = 'query';
     } else {
         status = 400;
-        reqPayloadIs = 'No Request Payload';
+        payLoadFrom = 'No Request Payload';
     }
-    console.log('* PATH:',req.path,'* METHOD:', req.method ,'* HOST:',req.hostname ,'* STATUS:', status, ' * PAYLOAD:', resPayload, ' * REQ PAYLOAD IS:', reqPayloadIs,' *' );
+    console.log('* PATH:',path,'* METHOD:', method ,'* HOST:',hostname ,'* STATUS:', status, ' * PAYLOAD:', payload, ' * REQ PAYLOAD FROM:', payLoadFrom,' *' );
     res.status(status).type('json').send({
+        API_VERSION: version,
         status,
-        path: req.path,
-        host: req.hostName,
-        payload: resPayload,
-        payloadFrom: reqPayloadIs
+        hostname,
+        path,
+        method,
+        payload,
+        payLoadFrom
     });
 }
 
-if(!process.env.NODE_ENV) {
-    app.listen(port, ()=> console.log('App Started: ', port));
-} else {
-    exports.DevApi = app;
-}
+process.env.NODE_ENV==='production'
+    ? exports.DevApi = app
+    :app.listen(port, ()=> console.log('App Started: ', port));
