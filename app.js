@@ -35,7 +35,7 @@ function handleAll(req,res,next){
         hostname,
         path,
         method,
-        payload,
+        JSON.parse(payload),
         payLoadFrom
     });
 }
